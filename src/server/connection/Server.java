@@ -73,15 +73,14 @@ public class Server extends Thread{
     }
     
     public void run(){
-        System.out.println(clients);
         while(!Thread.currentThread().isInterrupted()){
             try{
                 Socket s = socket.accept(); 
                 ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
                 ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
-
+                
                 clients.put(ois , oos);
-                System.out.println(clients);
+                
                 new Thread(() -> {
                     try{
                         while(true){
@@ -92,13 +91,14 @@ public class Server extends Thread{
                     }catch(Exception ex){
                         System.out.println("Client disconnesso");
                         clients.remove(ois);
-                        System.out.println(clients);
                     }
                 }).start();
+                
             } catch (IOException ex) {
                 if(socket.isClosed()){
                     System.out.println("Server chiuso correttamente");
-                    
+                    for(ObjectInputStream ois : clients.keySet())
+                        clients.remove(ois);
                 }
                 else Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
                 break;
