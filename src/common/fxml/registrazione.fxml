@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane id="AnchorPane" fx:id="registrazionePane" prefHeight="365.0" prefWidth="600.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8.0.202" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.controller.RegistrazioneController">
+   <children>
+      <TextField fx:id="usernameField" alignment="CENTER" layoutX="98.0" layoutY="136.0" prefHeight="32.0" prefWidth="150.0" promptText="Username" />
+      <TextField fx:id="passwordField" alignment="CENTER" layoutX="98.0" layoutY="184.0" prefHeight="32.0" prefWidth="150.0" promptText="Password" />
+      <Button fx:id="registramiButton" contentDisplay="CENTER" layoutX="375.0" layoutY="184.0" mnemonicParsing="false" onAction="#handleRegistramiButton" text="Registrami" />
+      <Text fx:id="registrazione" layoutX="98.0" layoutY="69.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Inserisci Username e password per la registrazione!">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Text>
+      <Label fx:id="messaggioLabel" layoutX="406.0" layoutY="144.0" text="Label" />
+      <Button fx:id="tornaAlLogin" layoutX="224.0" layoutY="288.0" mnemonicParsing="false" onAction="#tornaAlLogin" text="torna al login" />
+   </children>
+</AnchorPane>

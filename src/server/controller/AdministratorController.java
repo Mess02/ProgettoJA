@@ -1,0 +1,146 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/javafx/FXMLController.java to edit this template
+ */
+package server.controller;
+
+import server.connection.Server;
+import server.database.ServerDAO;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ResourceBundle;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import server.User;
+
+/**
+ * FXML Controller class
+ *
+ * @author Mess
+ */
+public class AdministratorController implements Initializable {
+    private FileChooser fileChooser;
+    private Server server;
+    
+    @FXML private Button uploadFileButton;
+    @FXML private ListView<String> fileList;
+    @FXML private Button analysisButton;
+    @FXML private Button uploadAnalysisButton;
+    @FXML private Label statoLabel;
+    @FXML private Button avviaServerButton;
+    @FXML private ListView<User> clientList;
+    @FXML private Button avviaPartitaButton;
+
+    /**
+     * Initializes the controller class.
+     */
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        // TODO
+        ServerDAO s = new ServerDAO();
+        ObservableList<User> list = FXCollections.observableArrayList(s.getAllPlayer());
+        clientList.setItems(list);
+        
+        avviaPartitaButton.setDisable(true);
+        analysisButton.setDisable(true);
+        
+        fileChooser = new FileChooser();
+        fileChooser.setTitle("Scegli un file!");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("File TXT" , "*.txt"));
+        
+        aggiornaListaFile();
+    }    
+
+    @FXML
+    private void uploadFile(ActionEvent event) throws IOException{
+        Stage stage = (Stage)((Node) event.getSource()).getScene().getWindow();
+        File file = fileChooser.showOpenDialog(stage);
+                
+        if(file == null) return;
+        
+        Path source = file.toPath();
+        Path destination = Paths.get("file/" + file.getName());
+        
+        Files.copy(source , destination , StandardCopyOption.REPLACE_EXISTING);
+        
+        statoLabel.setText("FileCaricato: "+file.getName());
+        aggiornaListaFile();
+
+    }
+
+    @FXML
+    private void analiyeText(ActionEvent event) {
+        String fileSelezionato = fileList.getSelectionModel().getSelectedItem();
+        
+        if(fileSelezionato == null){
+            statoLabel.setText("Seleziona un file da analizzare");
+            return;
+        }
+        
+        statoLabel.setText("Analisi di "+ fileSelezionato + "in corso . . .");
+    }
+
+    @FXML
+    private void uploadAnalysis(ActionEvent event) {
+        statoLabel.setText("analisi caricata");
+        avviaPartitaButton.setDisable(false);
+    }
+    
+    
+    private void aggiornaListaFile(){
+        File cartella = new File("file/");
+        if(cartella.exists()){
+            ObservableList<String> files = FXCollections.observableArrayList();
+            for(File f: cartella.listFiles()){
+                if(f.getName().endsWith(".txt")){
+                    files.add(f.getName());
+                }
+            }
+            fileList.setItems(files);
+        }
+    }
+    
+    @FXML
+    private void avviaServer(ActionEvent event){
+        try{
+            server = new Server();
+            statoLabel.setText("Server avviato! in attesa dei client . . .");
+            avviaServerButton.setDisable(true);
+        }catch(Exception e){
+            statoLabel.setText("Errrore nell'avvio del server");
+            System.out.println("Errore: "+ e.getMessage());
+        }
+    }
+    
+    @FXML
+    private void avviaPartita(ActionEvent event){
+        String fileSelezionato = fileList.getSelectionModel().getSelectedItem();
+        
+        if(fileSelezionato == null){
+            statoLabel.setText("Seleziona un testo prima di avviare la partita");
+            return;
+        }
+        
+        statoLabel.setText("Partita avviata");
+    }
+
+    @FXML
+    private void disconnect(ActionEvent event) throws IOException {
+        server.disconnect();
+    }
+}
+
