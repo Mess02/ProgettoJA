@@ -67,7 +67,11 @@ public class Server extends Thread{
         if(msg instanceof CredentialsMessage){
             CredentialsMessage cm = (CredentialsMessage) msg;
             if(cm.getTipo() == TYPE.LOGIN){
-                boolean success = serverDAO.verifyUser(cm);
+                boolean success;
+                
+                if(players.contains(new ConnectedPlayer(new Player(cm.getUsername()) , null))) success = false;
+                else success = serverDAO.verifyUser(cm);
+                
                 sendMessage(new ResponseMessage(success) , oos);
                 
                 if(success) players.add(new ConnectedPlayer(new Player(cm.getUsername()) , s));
