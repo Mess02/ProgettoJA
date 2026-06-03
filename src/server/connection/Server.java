@@ -4,6 +4,7 @@
  */
 package server.connection;
 
+import common.ConnectedPlayer;
 import common.exceptions.MessageException;
 import server.database.ServerDAO;
 import java.io.IOException;
@@ -17,12 +18,16 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import common.CredentialsMessage;
+import common.Player;
 import common.ResponseMessage;
 import common.TYPE;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -30,7 +35,7 @@ import java.util.Properties;
  * @author Mess
  */
 public class Server extends Thread{
-    private Map<ObjectInputStream , ObjectOutputStream> clients;
+    private List<ConnectedPlayer> players;
     private ServerSocket socket;
     private final ServerDAO serverDAO;
     
@@ -38,7 +43,7 @@ public class Server extends Thread{
     public Server() throws IOException {
         setSocket();
         
-        clients = new HashMap<>();
+        players = new ArrayList<>();
         serverDAO = new ServerDAO();
         
         this.start();
@@ -58,49 +63,64 @@ public class Server extends Thread{
         oos.flush();
     }
 
-    public void handleMessage(Serializable msg , ObjectOutputStream oos) throws IOException , MessageException{
+    public void handleMessage(Serializable msg , Socket s , ObjectOutputStream oos) throws IOException , MessageException{
         if(msg instanceof CredentialsMessage){
             CredentialsMessage cm = (CredentialsMessage) msg;
             if(cm.getTipo() == TYPE.LOGIN){
                 boolean success = serverDAO.verifyUser(cm);
                 sendMessage(new ResponseMessage(success) , oos);
+                
+                if(success) players.add(new ConnectedPlayer(new Player(cm.getUsername()) , s));
+                System.out.println(players);
+                
             }else if(cm.getTipo() == TYPE.REGISTRATION){
                 boolean success = serverDAO.addUser(cm);
                 sendMessage(new ResponseMessage(success) , oos);
+                
+                if(success) players.add(new ConnectedPlayer(new Player(cm.getUsername()) , s));   
+                System.out.println(players);
             }    
         }/* qui vanno aggiunti gli if else () per ogni  messaggio , il throw deve essere l'ultimo else */ 
             else throw new MessageException("Non è stato possibile leggere correttamente il messaggio");
     }
     
     public void run(){
-        while(!Thread.currentThread().isInterrupted()){
+        while(true){
             try{
                 Socket s = socket.accept(); 
                 ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
                 ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
-                
-                clients.put(ois , oos);
                 
                 new Thread(() -> {
                     try{
                         while(true){
                             Serializable msg = (Serializable) ois.readObject();
                             if(msg != null)
-                                handleMessage(msg , oos);
+                                handleMessage(msg , s ,oos);
                         }
                     }catch(Exception ex){
                         System.out.println("Client disconnesso");
-                        clients.remove(ois);
+                        /* l'iterator serve per non far lanciare l'exception ConcurrentModificationException */
+                        Iterator<ConnectedPlayer> it = players.iterator();
+                        while (it.hasNext()) {
+                            ConnectedPlayer conn = it.next();
+                            if (conn.getSocket().equals(s)) {
+                                it.remove();
+                            }
+                        }
+                        System.out.println(players);
                     }
                 }).start();
                 
             } catch (IOException ex) {
                 if(socket.isClosed()){
                     System.out.println("Server chiuso correttamente");
-                    for(ObjectInputStream ois : clients.keySet())
-                        clients.remove(ois);
-                }
-                else Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                    for(ConnectedPlayer cp : players)
+                        try {
+                            cp.getSocket().close();
+                        } catch (IOException ex1) {}
+                    players.clear();
+                } else Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
                 break;
             }
         }

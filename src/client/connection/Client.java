@@ -71,7 +71,14 @@ public class Client extends Thread{
                 Serializable msg = (Serializable) ois.readObject();
                 handleMessage(msg);
             } catch (IOException | ClassNotFoundException ex) {
-                Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                if(socket.isClosed())
+                    System.out.println("Il server ha chiuso la connessione");
+                else try {
+                    socket.close();
+                    System.out.println("Il server ha chiuso la connessione");
+                } catch (IOException ex1) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex1);
+                }
                 break;
             }
         }
