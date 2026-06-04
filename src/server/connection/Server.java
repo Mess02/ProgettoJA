@@ -50,7 +50,7 @@ public class Server extends Thread{
     }
     
     public void disconnect() throws IOException{
-        this.socket.close();
+        socket.close();
     }
     
     public void broadcast(Serializable msg) throws IOException{
@@ -66,7 +66,7 @@ public class Server extends Thread{
     public void handleMessage(Serializable msg , Socket s , ObjectOutputStream oos) throws IOException , MessageException{
         if(msg instanceof CredentialsMessage){
             CredentialsMessage cm = (CredentialsMessage) msg;
-            if(cm.getTipo() == TYPE.LOGIN){
+            if(cm.getType() == TYPE.LOGIN){
                 boolean success;
                 
                 if(players.contains(new ConnectedPlayer(new Player(cm.getUsername()) , null))) success = false;
@@ -77,7 +77,7 @@ public class Server extends Thread{
                 if(success) players.add(new ConnectedPlayer(new Player(cm.getUsername()) , s));
                 System.out.println(players);
                 
-            }else if(cm.getTipo() == TYPE.REGISTRATION){
+            }else if(cm.getType() == TYPE.REGISTRATION){
                 boolean success = serverDAO.addUser(cm);
                 sendMessage(new ResponseMessage(success) , oos);
                 

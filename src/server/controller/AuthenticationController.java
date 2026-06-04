@@ -4,6 +4,8 @@
  */
 package server.controller;
 
+import common.CredentialsMessage;
+import common.TYPE;
 import server.database.ServerDAO;
 import java.io.IOException;
 import java.net.URL;
@@ -52,7 +54,7 @@ public class AuthenticationController implements Initializable {
         
         ServerDAO server = new ServerDAO();
         
-        if(/*server.verifyUser(new CredentialsMessage(username , password, TYPE.LOGIN))*/true){
+        if(server.verifyUser(new CredentialsMessage(username , password, TYPE.ADLOGIN))){
             System.out.println("\n Amministratore autenticato \n");
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/server/fxml/AdministratorView.fxml"));

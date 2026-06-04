@@ -9,5 +9,5 @@ package common;
  * @author Mess
  */
 public enum TYPE {
-    LOGIN , REGISTRATION;
+    LOGIN , ADLOGIN , REGISTRATION;
 }

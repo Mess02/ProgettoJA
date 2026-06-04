@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import common.CredentialsMessage;
+import common.TYPE;
 import server.User;
 
 /**
@@ -29,8 +30,12 @@ public class ServerDAO implements DAO{
     @Override 
     public boolean verifyUser(CredentialsMessage credentials){
         String getPassword = null;
-        try(Connection c = DriverManager.getConnection(url , username , this.password);
-                PreparedStatement s = c.prepareStatement("SELECT password FROM User WHERE username = ?")){
+        TYPE type = credentials.getType();
+        try(Connection c = DriverManager.getConnection(url , username , this.password)){
+            PreparedStatement s;
+            
+            if(type.equals(TYPE.ADLOGIN)) s = c.prepareStatement("SELECT password FROM users WHERE username = ? and type = 'administrator'");
+            else s = c.prepareStatement("SELECT password FROM users WHERE username = ? and type = 'user'");
             
             s.setString(1, credentials.getUsername());
             
@@ -52,7 +57,7 @@ public class ServerDAO implements DAO{
         List<User> list = new ArrayList<>();
         
         try(Connection c = DriverManager.getConnection(url , username , password);
-                PreparedStatement s = c.prepareStatement("SELECT * FROM User Where role = 'player'")){
+                PreparedStatement s = c.prepareStatement("SELECT * FROM users Where type = 'user'")){
             
             
             ResultSet rs = s.executeQuery();
@@ -69,7 +74,7 @@ public class ServerDAO implements DAO{
     public boolean addUser(CredentialsMessage credentials){
         try(Connection c = DriverManager.getConnection(url , username , password);
                 Statement s = c.createStatement()){
-            String addUser = String.format("INSERT INTO User VALUES ('%s' , '%s' , '%s')" , credentials.getUsername() , credentials.getPassword() , "player");
+            String addUser = String.format("INSERT INTO users VALUES ('%s' , '%s' , '%s')" , credentials.getUsername() , credentials.getPassword() , "player");
             
             return s.execute(addUser);
         } catch (SQLException ex) {
