@@ -55,7 +55,6 @@ public class Client extends Thread{
                         Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 });
-                
             }
         }
     }

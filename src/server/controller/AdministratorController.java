@@ -4,6 +4,7 @@
  */
 package server.controller;
 
+import java.io.BufferedReader;
 import server.connection.Server;
 import server.database.ServerDAO;
 import java.io.File;
@@ -13,7 +14,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -77,8 +84,11 @@ public class AdministratorController implements Initializable {
         
         Files.copy(source , destination , StandardCopyOption.REPLACE_EXISTING);
         
-        statoLabel.setText("FileCaricato: "+file.getName());
+        statoLabel.setText("FileCaricato: " + file.getName());
         aggiornaListaFile();
+        
+        
+        analyze(file);
 
     }
 
@@ -141,6 +151,43 @@ public class AdministratorController implements Initializable {
     @FXML
     private void disconnect(ActionEvent event) throws IOException {
         server.disconnect();
+    }
+    
+    private void analyze(File filename){
+        
+        Path stopwords = Paths.get("file/stopwords-it.txt");
+        List<String> stop = new ArrayList<>();
+        
+        List<String> text = new ArrayList<>();
+        try(BufferedReader r = Files.newBufferedReader(stopwords)){
+            String line;
+            while((line = r.readLine()) != null)
+                stop.add(line);
+        } catch (IOException ex) {
+            Logger.getLogger(AdministratorController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        try(BufferedReader r = Files.newBufferedReader(filename.toPath())){
+            String line;
+            while((line = r.readLine()) != null){
+                Arrays.stream(line.split(" "))
+                        .map(String :: trim)
+                        .map(String :: toLowerCase)
+                        .filter(s -> !s.isEmpty())
+                        .map(s -> s.replaceAll("[à]" , "a"))
+                        .map(s -> s.replaceAll("[èé]" , "e"))
+                        .map(s -> s.replaceAll("[ì]" , "i"))
+                        .map(s -> s.replaceAll("[ò]" , "o"))
+                        .map(s -> s.replaceAll("[ù]" , "u"))
+                        .map(s -> s.replaceAll("[^a-z]" , ""))
+                        .forEach(text :: add);
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(AdministratorController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        text = text.stream().filter(p -> !stop.contains(p)).collect(Collectors.toList());
+        
     }
 }
 
