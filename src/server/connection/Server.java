@@ -4,6 +4,9 @@
  */
 package server.connection;
 
+import common.AnswerMessage;
+import common.Challenge;
+import common.ChallengeMessage;
 import common.ConnectedPlayer;
 import common.exceptions.MessageException;
 import server.database.ServerDAO;
@@ -18,6 +21,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import common.CredentialsMessage;
+import common.DIFFICULTY;
 import common.Player;
 import common.ResponseMessage;
 import common.TYPE;
@@ -84,7 +88,19 @@ public class Server extends Thread{
                 if(success) players.add(new ConnectedPlayer(new Player(cm.getUsername()) , s));   
                 System.out.println(players);
             }    
-        }/* qui vanno aggiunti gli if else () per ogni  messaggio , il throw deve essere l'ultimo else */ 
+        }else if(msg instanceof ChallengeMessage){
+            ChallengeMessage chm= (ChallengeMessage) msg;
+            
+            Challenge c = new Challenge();
+            chm = c.prepara(frequenza, testo, DIFFICULTY.MEDIUM);
+            
+            sendMessage(chm, oos);
+            
+        }else if(msg instanceof AnswerMessage){
+            AnswerMessage am= (AnswerMessage) msg;
+            
+            if(am.getRisposta()!=)
+        }
             else throw new MessageException("Non è stato possibile leggere correttamente il messaggio");
     }
     

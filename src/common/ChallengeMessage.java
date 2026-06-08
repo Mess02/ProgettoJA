@@ -5,11 +5,13 @@
  */
 package common;
 
+import java.io.Serializable;
+
 /**
  *
  * @author Sara
  */
-public class ChallengeMessage {
+public class ChallengeMessage implements Serializable{
     private String parolaCifrata;
     private String testo;
     private int timer;
