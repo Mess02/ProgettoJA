@@ -11,7 +11,7 @@ select username , count(*) as partite_disputate
 from users join participation on users.username = participation.user_id
 group by username;
 
-/* tempo medio di risposta per utennte */ 
+/* tempo medio di risposta per utente */ 
 select username , avg(response_time) as tempo_medio_di_risposta
 from users join participation on users.username = participation.user_id
 group by username;

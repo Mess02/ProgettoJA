@@ -4,6 +4,7 @@
  */
 package server.controller;
 
+import java.awt.Desktop;
 import java.io.BufferedReader;
 import server.connection.Server;
 import server.database.ServerDAO;
@@ -68,6 +69,21 @@ public class AdministratorController implements Initializable {
         fileChooser = new FileChooser();
         fileChooser.setTitle("Scegli un file!");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("File TXT" , "*.txt"));
+        
+        fileList.setOnMouseClicked(event -> {
+            if(event.getClickCount() == 2){
+                String filename = fileList.getSelectionModel().getSelectedItem();
+                if(filename != null){
+                    File file = new File("file/" + filename);
+                    try{
+                        Desktop.getDesktop().open(file);
+                    }catch(IOException ex){
+                        System.err.println(ex);
+                    }
+                }
+            }
+                    
+        });
         
         aggiornaListaFile();
     }    
