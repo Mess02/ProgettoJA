@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import common.CredentialsMessage;
+import common.Player;
 import common.TYPE;
 import server.User;
 
@@ -53,8 +54,8 @@ public class ServerDAO implements DAO{
     }
     
     @Override 
-    public List<User> getAllPlayer(){
-        List<User> list = new ArrayList<>();
+    public List<Player> getAllPlayer(){
+        List<Player> list = new ArrayList<>();
         
         try(Connection c = DriverManager.getConnection(url , username , password);
                 PreparedStatement s = c.prepareStatement("SELECT * FROM users Where type = 'user'")){
@@ -62,7 +63,7 @@ public class ServerDAO implements DAO{
             
             ResultSet rs = s.executeQuery();
             while(rs.next())
-                list.add(new User(rs.getString("username")));
+                list.add(new Player(rs.getString("username")));
         } catch (SQLException ex) {
             Logger.getLogger(ServerDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -81,5 +82,45 @@ public class ServerDAO implements DAO{
             Logger.getLogger(ServerDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
+    }
+
+    @Override
+    public int getPlayerWin(String username){
+        try(Connection c = DriverManager.getConnection(url , username , password);
+                PreparedStatement s = c.prepareStatement("SELECT username , count(*) AS vittorie FROM users JOIN participation "
+                        + "ON users.username = participation.user_id WHERE score > 0 and username = ?")){
+            
+            s.setString(1 , username);
+            ResultSet rs = s.executeQuery();
+            return rs.getInt("vittorie");
+        } catch (SQLException ex) {
+            Logger.getLogger(ServerDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;
+    }
+    
+    @Override 
+    public int getPlayerMatch(String username){
+        try(Connection c = DriverManager.getConnection(url , username , password);
+                PreparedStatement s = c.prepareStatement("SELECT username , count(*) AS partite FROM users JOIN participation "
+                        + "ON users.username = participation.user_id WHERE username = ?")){
+            
+            s.setString(1 , username); 
+            ResultSet rs = s.executeQuery();
+            return rs.getInt("partite");
+        } catch (SQLException ex) {
+            Logger.getLogger(ServerDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;        
+    }
+
+    @Override
+    public double getPlayerResponseTime(String username) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public void getPlayersMatchHistory(String username) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

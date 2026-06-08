@@ -4,6 +4,7 @@
  */
 package server.controller;
 
+import common.Player;
 import java.awt.Desktop;
 import java.io.BufferedReader;
 import server.connection.Server;
@@ -26,8 +27,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -50,7 +54,7 @@ public class AdministratorController implements Initializable {
     @FXML private Button uploadAnalysisButton;
     @FXML private Label statoLabel;
     @FXML private Button avviaServerButton;
-    @FXML private ListView<User> clientList;
+    @FXML private ListView<Player> clientList;
     @FXML private Button avviaPartitaButton;
 
     /**
@@ -60,8 +64,10 @@ public class AdministratorController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         // TODO
         ServerDAO s = new ServerDAO();
-        ObservableList<User> list = FXCollections.observableArrayList(s.getAllPlayer());
+        ObservableList<Player> list = FXCollections.observableArrayList(s.getAllPlayer());
         clientList.setItems(list);
+        for(Player p : list)
+            System.out.println(s.getPlayerMatch(p.getUsername()));
         
         avviaPartitaButton.setDisable(true);
         analysisButton.setDisable(true);
@@ -84,6 +90,23 @@ public class AdministratorController implements Initializable {
             }
                     
         });
+        
+        clientList.setOnMouseClicked(event -> {
+            if(event.getClickCount() == 2){
+                String username = clientList.getSelectionModel().getSelectedItem().getUsername();
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/server/fxml/PlayerView.fxml"));
+                    Parent root = loader.load();
+                    PlayerViewController c = loader.getController();
+                    c.init(username);
+                    Stage stage = new Stage();
+                    stage.setScene(new Scene(root));
+                    stage.show();
+                } catch (IOException ex) {
+                    Logger.getLogger(AdministratorController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
+            }});
         
         aggiornaListaFile();
     }    
@@ -125,7 +148,6 @@ public class AdministratorController implements Initializable {
         statoLabel.setText("analisi caricata");
         avviaPartitaButton.setDisable(false);
     }
-    
     
     private void aggiornaListaFile(){
         File cartella = new File("file/");

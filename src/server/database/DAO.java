@@ -6,7 +6,7 @@ package server.database;
 
 import java.util.List;
 import common.CredentialsMessage;
-import server.User;
+import common.Player;
 
 /**
  *
@@ -16,5 +16,9 @@ public interface DAO {
     public boolean verifyUser(CredentialsMessage credentials);
 
     public boolean addUser(CredentialsMessage credentials);
-    public List<User> getAllPlayer();
+    public List<Player> getAllPlayer();
+    public int getPlayerWin(String username);
+    public int getPlayerMatch(String username);
+    public double getPlayerResponseTime(String username);
+    public void getPlayersMatchHistory(String username); /* ho messo void ma credo sia una lista */
 }

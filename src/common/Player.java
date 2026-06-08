@@ -42,7 +42,7 @@ public class Player {
     
     @Override
     public String toString(){
-        return "Username = " + username;
+        return username;
     }
     
 }

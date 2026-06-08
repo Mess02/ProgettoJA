@@ -30,11 +30,15 @@ import javafx.stage.Stage;
  */
 public class AuthenticationController implements Initializable {
     
-    @FXML private TextField usernameField;
-    @FXML private PasswordField passwordField;
-    @FXML private Label messaggioLabel;
+    @FXML
+    private TextField usernameField;
+    @FXML
+    private PasswordField passwordField;
+    @FXML
+    private Label messaggioLabel;
     
-    @FXML private Button signInButton;
+    @FXML
+    private Button signInButton;
 
     /**
      * Initializes the controller class.
@@ -48,7 +52,7 @@ public class AuthenticationController implements Initializable {
     }    
 
     @FXML
-    private void signIn(ActionEvent event) throws IOException {
+    public void signIn(ActionEvent event) throws IOException {
         String username = usernameField.getText().trim();
         String password = passwordField.getText().trim();
         

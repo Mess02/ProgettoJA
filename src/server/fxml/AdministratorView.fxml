@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane id="AnchorPane" prefHeight="467.0" prefWidth="669.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="server.controller.AdministratorController">
+<AnchorPane id="AnchorPane" prefHeight="467.0" prefWidth="669.0" xmlns="http://javafx.com/javafx/8.0.202" xmlns:fx="http://javafx.com/fxml/1" fx:controller="server.controller.AdministratorController">
    <children>
       <Button fx:id="uploadFileButton" layoutX="294.0" layoutY="211.0" mnemonicParsing="false" onAction="#uploadFile" prefHeight="27.0" prefWidth="99.0" text="Carica file" AnchorPane.bottomAnchor="230.60000000000002" AnchorPane.leftAnchor="294.0" AnchorPane.rightAnchor="314.79999999999995" AnchorPane.topAnchor="211.0" />
       <ListView fx:id="fileList" layoutX="294.4" layoutY="39.2" prefHeight="151.0" prefWidth="391.0" AnchorPane.bottomAnchor="279.0" AnchorPane.leftAnchor="294.0" AnchorPane.rightAnchor="22.0" AnchorPane.topAnchor="39.0" />
