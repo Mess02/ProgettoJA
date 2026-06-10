@@ -37,7 +37,7 @@ public class GameController implements Initializable, Controller {
     private Thread timerThread;
     
     @FXML private TextField rispostaTextField;
-    @FXML private Label iniserisciLabel;
+    @FXML private Label inserisciLabel;
     @FXML private Button inviaButton;
     @FXML private TextFlow testoTextFlow;
     @FXML private Label statoLabel;
@@ -57,7 +57,7 @@ public class GameController implements Initializable, Controller {
     
     public void setClient(Client client) {
         this.client = client;
-        client.setController((Controller) this);
+        client.setController(this);
     }
     
     public void setChallenge(ChallengeMessage cm){

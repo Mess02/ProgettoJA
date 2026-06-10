@@ -69,9 +69,9 @@ public class Client extends Thread{
             } else {
                 Platform.runLater(() -> {
                     if (controller instanceof AuthenticationController) {
-                        ((AuthenticationController) controller).mostraErrore("Credenziali errate!");
+                        ((AuthenticationController) controller).mostraTesto("Credenziali errate!");
                     } else if (controller instanceof RegistrazioneController) {
-                        ((RegistrazioneController) controller).mostraErrore("Username già esistente.");
+                        ((RegistrazioneController) controller).mostraTesto("Username già esistente.");
                     }
                 });
             }
@@ -81,7 +81,7 @@ public class Client extends Thread{
             WaitingMessage wm = (WaitingMessage) msg;
             Platform.runLater(() -> {
                 if (controller instanceof AuthenticationController) {
-                    ((AuthenticationController) controller).mostraErrore(wm.getTesto());
+                    ((AuthenticationController) controller).mostraTesto(wm.getTesto());
                 }
             });
         }
