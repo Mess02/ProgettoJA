@@ -21,6 +21,6 @@
          </columnResizePolicy>
       </TableView>
       <ComboBox fx:id="difficoltaCombo" layoutX="57.0" layoutY="216.0" prefWidth="150.0" promptText="Scegli difficoltà" />
-      <Label fx:id="statoLabel" layoutX="36.0" layoutY="16.0" text="Label" />
+      <Label fx:id="statoLabel" layoutX="36.0" layoutY="16.0" text="" />
    </children>
 </AnchorPane>

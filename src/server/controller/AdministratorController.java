@@ -4,6 +4,7 @@
  */
 package server.controller;
 
+import common.ConnectedPlayer;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -50,6 +51,8 @@ import server.User;
 public class AdministratorController implements Initializable {
     private FileChooser fileChooser;
     private Server server;
+    private LinkedHashMap<String, Integer> frequenza;
+    private String testo;
     
     @FXML private Button uploadFileButton;
     @FXML private ListView<String> fileList;
@@ -146,19 +149,23 @@ public class AdministratorController implements Initializable {
     
     @FXML
     private void avviaPartita(ActionEvent event){
-        String fileSelezionato = fileList.getSelectionModel().getSelectedItem();
+        aggiornaListaConnessi();
         
-        if(fileSelezionato == null){
-            statoLabel.setText("Seleziona un testo prima di avviare la partita");
+        if (frequenza == null || testo == null) {
+            statoLabel.setText("Analizza prima un file!");
             return;
         }
         
-        statoLabel.setText("Partita avviata");
+        server.setPartita(frequenza, testo);
+        statoLabel.setText("Partita avviata!");
+        avviaPartitaButton.setDisable(true);
     }
 
     @FXML
     private void disconnect(ActionEvent event) throws IOException {
         server.disconnect();
+        statoLabel.setText("Server disconnesso.");
+        avviaServerButton.setDisable(false);
     }
     
     private void analyze(File filename){
@@ -226,5 +233,15 @@ public class AdministratorController implements Initializable {
             mappa = (Map<String, Integer>) ois.readObject();
         }
         return mappa;
+    }
+    
+    private void aggiornaListaConnessi() {
+        if (server != null) {
+            ObservableList<User> connessi = FXCollections.observableArrayList();
+            for (ConnectedPlayer cp : server.getPlayers()) {
+                connessi.add(new User(cp.getPlayer().getUsername()));
+            }
+            clientList.setItems(connessi);
+        }
     }
 }

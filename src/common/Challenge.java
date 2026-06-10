@@ -99,4 +99,7 @@ public class Challenge {
         return new ChallengeMessage(parolaCifrata, testoModificato, TIMER);
     }
     
+    public String getParolaCorretta() {
+        return parolaScelta;
+    }
 }

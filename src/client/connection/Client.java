@@ -7,6 +7,12 @@ package client.connection;
 import client.Controller;
 import common.ResponseMessage;
 import client.controller.AuthenticationController;
+import client.controller.GameController;
+import client.controller.MenuController;
+import client.controller.RegistrazioneController;
+import common.ChallengeMessage;
+import common.ResultMessage;
+import common.WaitingMessage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -46,16 +52,56 @@ public class Client extends Thread{
     }
     
     public void handleMessage(Serializable msg) throws IOException{
-        if(msg instanceof ResponseMessage){
+        if (msg instanceof ResponseMessage) {
             ResponseMessage rm = (ResponseMessage) msg;
-            if(rm.isSuccess()){
-                Platform.runLater(()->{try {
-                    ((AuthenticationController)controller).vaiAlMenu();
+            if (rm.isSuccess()) {
+                Platform.runLater(() -> {
+                    try {
+                        if (controller instanceof AuthenticationController) {
+                            ((AuthenticationController) controller).vaiAlMenu();
+                        } else if (controller instanceof RegistrazioneController) {
+                            ((RegistrazioneController) controller).vaiAlLogin();
+                        }
                     } catch (IOException ex) {
                         Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 });
+            } else {
+                Platform.runLater(() -> {
+                    if (controller instanceof AuthenticationController) {
+                        ((AuthenticationController) controller).mostraErrore("Credenziali errate!");
+                    } else if (controller instanceof RegistrazioneController) {
+                        ((RegistrazioneController) controller).mostraErrore("Username già esistente.");
+                    }
+                });
             }
+        }
+        
+        if (msg instanceof WaitingMessage) {
+            WaitingMessage wm = (WaitingMessage) msg;
+            Platform.runLater(() -> {
+                if (controller instanceof AuthenticationController) {
+                    ((AuthenticationController) controller).mostraErrore(wm.getTesto());
+                }
+            });
+        }
+        
+        if (msg instanceof ChallengeMessage) {
+            ChallengeMessage cm = (ChallengeMessage) msg;
+            Platform.runLater(() -> {
+                try {
+                    ((MenuController) controller).vaiAlGioco(cm);
+                } catch (IOException ex) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
+        }
+        
+        if (msg instanceof ResultMessage) {
+            ResultMessage rm = (ResultMessage) msg;
+            Platform.runLater(() -> {
+                ((GameController) controller).mostraRisultato(rm);
+            });
         }
     }
     

@@ -61,7 +61,7 @@ public class MenuController implements Initializable , Controller{
         statoLabel.setText("In attesa dell'altro giocatore . . . ");
     }
   
-    private void vaiAlGioco(ChallengeMessage cm) throws IOException{
+    public void vaiAlGioco(ChallengeMessage cm) throws IOException{
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/common/fxml/Game.fxml"));
         Parent root= loader.load();
         

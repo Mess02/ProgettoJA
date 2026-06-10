@@ -11,20 +11,21 @@ import java.io.Serializable;
  *
  * @author Sara
  */
-public class AnswerMessage implements Serializable{
-    public String risposta;
+public class WaitingMessage implements Serializable{
+    private String testo;
 
-    public AnswerMessage(String risposta) {
-        this.risposta=risposta;
+    public WaitingMessage(String testo) {
+        this.testo = testo;
     }
 
-    public String getRisposta() {
-        return risposta;
+    public String getTesto() {
+        return testo;
     }
 
     @Override
     public String toString() {
-        return risposta;
+        return testo;
     }
+    
     
 }

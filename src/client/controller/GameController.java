@@ -5,13 +5,17 @@
  */
 package client.controller;
 
+import client.Controller;
 import common.ChallengeMessage;
 import common.ResultMessage;
 import client.connection.Client;
+import common.AnswerMessage;
 import javafx.scene.paint.Color;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -26,7 +30,7 @@ import javafx.scene.text.TextFlow;
  *
  * @author Sara
  */
-public class GameController implements Initializable {
+public class GameController implements Initializable, Controller {
     
     private Client client;
     private int secondiRimasti;
@@ -49,7 +53,12 @@ public class GameController implements Initializable {
         inviaButton.setDisable(true);
         statoLabel.setText("Stato: in attesa dell'altro giocatore . . .");
         parolaCorrettaLabel.setText("");
-    }    
+    }   
+    
+    public void setClient(Client client) {
+        this.client = client;
+        client.setController((Controller) this);
+    }
     
     public void setChallenge(ChallengeMessage cm){
         Platform.runLater(() -> mostraChallenge(cm));
@@ -66,7 +75,7 @@ public class GameController implements Initializable {
         String[] parole = cm.getTesto().split(" ");
         for(String parola : parole){
             Text t = new Text(parola + " ");
-            if(parola.equals(cm.getParolaCifrata())){
+            if(parola.equalsIgnoreCase(cm.getParolaCifrata())){
                 t.setFill(Color.RED);
             }
             testoTextFlow.getChildren().add(t);
@@ -107,7 +116,7 @@ public class GameController implements Initializable {
         timerThread.start();
     }
     
-    private void mostraRisultato(ResultMessage rm){
+    public void mostraRisultato(ResultMessage rm){
         if(timerThread != null){
             timerThread.interrupt();
         }
@@ -121,9 +130,19 @@ public class GameController implements Initializable {
     
     @FXML 
     private void inviaRisposta() throws IOException{
-        String risposta=rispostaTextField.getText().trim();
-          
-        
+        String risposta = rispostaTextField.getText().trim();
+        if (!risposta.isEmpty()) {
+            try {
+                client.sendMessage(new AnswerMessage(risposta));
+                rispostaTextField.clear();
+                rispostaTextField.setDisable(true);
+                inviaButton.setDisable(true);
+                statoLabel.setText("Stato: risposta inviata, aspetta...");
+            } catch (IOException ex) {
+                Logger.getLogger(GameController.class.getName()).log(Level.SEVERE, null, ex);
+                statoLabel.setText("Errore nell'invio della risposta.");
+            }
+        }
     }
     
     @FXML 

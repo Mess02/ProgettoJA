@@ -17,7 +17,7 @@
             <Font size="18.0" />
          </font>
       </Text>
-      <Label fx:id="messaggioLabel" layoutX="406.0" layoutY="144.0" text="Label" />
+      <Label fx:id="messaggioLabel" layoutX="406.0" layoutY="144.0" text="" />
       <Button fx:id="tornaAlLogin" layoutX="224.0" layoutY="288.0" mnemonicParsing="false" onAction="#tornaAlLogin" text="torna al login" />
    </children>
 </AnchorPane>

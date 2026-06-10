@@ -96,4 +96,8 @@ public class AuthenticationController implements Initializable , Controller {
             }
         });
     }
+
+    public void mostraErrore(String testo) {
+        messaggioLabel.setText(testo);
+    }
 }
