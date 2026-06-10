@@ -14,6 +14,8 @@ import javafx.scene.paint.Color;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
@@ -35,6 +37,8 @@ public class GameController implements Initializable, Controller {
     private Client client;
     private int secondiRimasti;
     private Thread timerThread;
+    private Timer timer;
+
     
     @FXML private TextField rispostaTextField;
     @FXML private Label inserisciLabel;
@@ -84,41 +88,44 @@ public class GameController implements Initializable, Controller {
         avviaTimer(cm.getTimer());
     }
     
-    private void avviaTimer(int secondi){
+    private void avviaTimer(int secondi) {
         secondiRimasti = secondi;
-        
-        timerThread = new Thread(() -> {
-            while (secondiRimasti > 0) {
-                final int secondiAttuali = secondiRimasti;
-                Platform.runLater(() -> {
-                    timerLabel.setText("Timer: " + secondiAttuali);
-                });
-                
-                secondiRimasti--;
-                
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    break;
+    
+        timer = new Timer();
+    
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (secondiRimasti > 0) {
+                    final int secondiAttuali = secondiRimasti;
+                    Platform.runLater(() -> {
+                        timerLabel.setText("Timer: " + secondiAttuali);
+                        if (secondiAttuali <= 10){
+                           timerLabel.setStyle("-fx-text-fill: orange; -fx-font-weight: bold;");
+                        }
+                    });
+            
+                    secondiRimasti--;
+                    
+                } else {
+                    
+                    Platform.runLater(() -> {
+                        timerLabel.setText("Timer: 0");
+                        timerLabel.setStyle("-fx-text-fill: red;");
+                        rispostaTextField.setDisable(true);
+                        inviaButton.setDisable(true);
+                        statoLabel.setText("Stato: tempo scaduto!");
+                    });
+                    
+                    timer.cancel(); 
                 }
             }
-            
-            Platform.runLater(() -> {
-                timerLabel.setText("Timer: 0");
-                timerLabel.setStyle("-fx-text-fill: red;");
-                rispostaTextField.setDisable(true);
-                inviaButton.setDisable(true);
-                statoLabel.setText("Stato: tempo scaduto!");
-            });
-        });
-        
-        timerThread.setDaemon(true);
-        timerThread.start();
+        }, 0, 1000); 
     }
-    
+
     public void mostraRisultato(ResultMessage rm){
-        if(timerThread != null){
-            timerThread.interrupt();
+        if (timer != null){
+            timer.cancel();
         }
         
         rispostaTextField.setDisable(true);
