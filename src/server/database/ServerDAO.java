@@ -83,35 +83,29 @@ public class ServerDAO implements DAO{
         }
         return false;
     }
+    
+    // f insert into tabella texts che ha titlee come id principale, lunghezza del test e path e analisis e poi  devo chiamare questa f nel metodo upload file
+    
+    public void insert(String title, int length, String path, String analysis) throws SQLException{
+        try(Connection c = DriverManager.getConnection(url, username, password);
+        PreparedStatement cmd = c.prepareStatement(
+            "INSERT INTO TEXTS(TITLE, LENGTH, PATH, ANALYSIS) VALUES (?,?,?,?)");){
+            cmd.setString(1, title);
+            cmd.setInt(2, length);
+            cmd.setString(3, path);
+            cmd.setString(4, analysis);
+            cmd.executeUpdate();
+        }
+    }
 
     @Override
-    public int getPlayerWin(String username){
-        try(Connection c = DriverManager.getConnection(url , username , password);
-                PreparedStatement s = c.prepareStatement("SELECT username , count(*) AS vittorie FROM users JOIN participation "
-                        + "ON users.username = participation.user_id WHERE score > 0 and username = ?")){
-            
-            s.setString(1 , username);
-            ResultSet rs = s.executeQuery();
-            return rs.getInt("vittorie");
-        } catch (SQLException ex) {
-            Logger.getLogger(ServerDAO.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return 0;
+    public int getPlayerWin(String username) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
-    
-    @Override 
-    public int getPlayerMatch(String username){
-        try(Connection c = DriverManager.getConnection(url , username , password);
-                PreparedStatement s = c.prepareStatement("SELECT username , count(*) AS partite FROM users JOIN participation "
-                        + "ON users.username = participation.user_id WHERE username = ?")){
-            
-            s.setString(1 , username); 
-            ResultSet rs = s.executeQuery();
-            return rs.getInt("partite");
-        } catch (SQLException ex) {
-            Logger.getLogger(ServerDAO.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return 0;        
+
+    @Override
+    public int getPlayerMatch(String username) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override

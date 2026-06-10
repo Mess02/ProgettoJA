@@ -139,6 +139,8 @@ public class AdministratorController implements Initializable {
         
         
         analyze(file);
+        
+        //insert(String title, int length, file, String analysis);
 
     }
 
