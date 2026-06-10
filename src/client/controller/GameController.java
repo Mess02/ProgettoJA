@@ -36,7 +36,6 @@ public class GameController implements Initializable, Controller {
     
     private Client client;
     private int secondiRimasti;
-    private Thread timerThread;
     private Timer timer;
 
     
