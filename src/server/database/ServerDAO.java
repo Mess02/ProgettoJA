@@ -82,4 +82,18 @@ public class ServerDAO implements DAO{
         }
         return false;
     }
+    
+    // f insert into tabella texts che ha titlee come id principale, lunghezza del test e path e analisis e poi  devo chiamare questa f nel metodo upload file
+    
+    public void insert(String title, int length, String path, String analysis) throws SQLException{
+        try(Connection c = DriverManager.getConnection(url, username, password);
+        PreparedStatement cmd = c.prepareStatement(
+            "INSERT INTO TEXTS(TITLE, LENGTH, PATH, ANALYSIS) VALUES (?,?,?,?)");){
+            cmd.setString(1, title);
+            cmd.setInt(2, length);
+            cmd.setString(3, path);
+            cmd.setString(4, analysis);
+            cmd.executeUpdate();
+        }
+    }
 }
