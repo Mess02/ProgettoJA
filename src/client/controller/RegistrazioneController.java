@@ -51,15 +51,12 @@ public class RegistrazioneController implements Initializable {
         passwordField.textProperty().addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
             validaRegistrazioneForm();
         });
-        
-        
-        
 
     }    
     
     private void validaRegistrazioneForm(){
         boolean ok = !usernameField.getText().trim().isEmpty() &&
-                !passwordField.getText().trim().isEmpty();
+                    !passwordField.getText().trim().isEmpty();
         registramiButton.setDisable(!ok);
     }
     
@@ -79,12 +76,17 @@ public class RegistrazioneController implements Initializable {
         registramiButton.setDisable(true);
     }
 
-    private void vaiAlLogin() throws IOException {
+    public void vaiAlLogin() throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/authentication.fxml"));
         Parent root =loader.load();
         
         Stage stage= (Stage) usernameField.getScene().getWindow();
         stage.setScene(new Scene(root));
         stage.show();
+    }
+
+    public void mostraTesto(String testo) {
+        messaggioLabel.setText(testo);
+        registramiButton.setDisable(false);
     }
 }

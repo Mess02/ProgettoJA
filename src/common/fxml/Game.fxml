@@ -14,6 +14,6 @@
       <TextFlow fx:id="testoTextFlow" layoutX="46.0" layoutY="60.0" prefHeight="154.0" prefWidth="515.0" />
       <Label fx:id="statoLabel" layoutX="42.0" layoutY="25.0" text="Stato: " />
       <Label fx:id="timerLabel" layoutX="492.0" layoutY="25.0" text="Timer: " />
-      <Label fx:id="parolaCorrettaLabel" layoutX="46.0" layoutY="335.0" text="la parola corretta era:" />
+      <Label fx:id="parolaCorrettaLabel" layoutX="46.0" layoutY="335.0" text="" />
    </children>
 </AnchorPane>

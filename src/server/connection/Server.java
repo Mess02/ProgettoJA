@@ -4,6 +4,9 @@
  */
 package server.connection;
 
+import common.AnswerMessage;
+import common.Challenge;
+import common.ChallengeMessage;
 import common.ConnectedPlayer;
 import common.exceptions.MessageException;
 import server.database.ServerDAO;
@@ -18,9 +21,13 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import common.CredentialsMessage;
+import common.DIFFICULTY;
 import common.Player;
+import common.RequestGameMessage;
 import common.ResponseMessage;
+import common.ResultMessage;
 import common.TYPE;
+import common.WaitingMessage;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,15 +43,21 @@ import java.util.Properties;
  */
 public class Server extends Thread{
     private List<ConnectedPlayer> players;
+    private Map<DIFFICULTY, ConnectedPlayer> inAttesa = new HashMap<>();
     private ServerSocket socket;
     private final ServerDAO serverDAO;
     
+    private String parolaCorretta;
+    private Map<String, Integer> frequenza;
+    private String testo;
+    private String primaRisposta;
     
     public Server() throws IOException {
         setSocket();
         
         players = new ArrayList<>();
         serverDAO = new ServerDAO();
+        primaRisposta=null;
         
         this.start();
     }
@@ -54,8 +67,16 @@ public class Server extends Thread{
     }
     
     public void broadcast(Serializable msg) throws IOException{
-        /* qua il messaggio broadcast deve essere mandato in broadcast ai player che fanno parte della stessa partita (in teoria)
-        */
+        for (ConnectedPlayer cp : players) {
+            ObjectOutputStream oos = new ObjectOutputStream(cp.getSocket().getOutputStream());
+            oos.writeObject(msg);
+            oos.flush();
+        }
+    }
+    
+    public void setPartita(Map<String, Integer> frequenza, String testo) {
+        this.frequenza = frequenza;
+        this.testo = testo;
     }
     
     public void sendMessage(Serializable msg , ObjectOutputStream oos) throws IOException{
@@ -74,8 +95,16 @@ public class Server extends Thread{
                 
                 sendMessage(new ResponseMessage(success) , oos);
                 
-                if(success) players.add(new ConnectedPlayer(new Player(cm.getUsername()) , s));
-                System.out.println(players);
+                if(success){
+                    players.add(new ConnectedPlayer(new Player(cm.getUsername()), s));
+                    System.out.println(players);
+                    
+                    if (players.size() == 1)
+                        sendMessage(new WaitingMessage("Aspetta l'altro giocatore . . ."), oos);
+                    
+                    if (players.size() == 2)
+                        System.out.println("Entrambi i player sono connessi!");
+                }
                 
             }else if(cm.getType() == TYPE.REGISTRATION){
                 boolean success = serverDAO.addUser(cm);
@@ -84,8 +113,65 @@ public class Server extends Thread{
                 if(success) players.add(new ConnectedPlayer(new Player(cm.getUsername()) , s));   
                 System.out.println(players);
             }    
-        }/* qui vanno aggiunti gli if else () per ogni  messaggio , il throw deve essere l'ultimo else */ 
-            else throw new MessageException("Non è stato possibile leggere correttamente il messaggio");
+        }else if (msg instanceof AnswerMessage) {
+            AnswerMessage am = (AnswerMessage) msg;
+            
+            String playerName = "";
+            for (ConnectedPlayer cp : players) {
+                if (cp.getSocket().equals(s)) {
+                    playerName = cp.getPlayer().getUsername();
+                    break;
+                }
+            }
+            
+            if (primaRisposta == null) {
+                primaRisposta = am.getRisposta();
+                
+                if (primaRisposta.equalsIgnoreCase(parolaCorretta)) {
+                    sendMessage(new ResultMessage(parolaCorretta, "Hai vinto!"), oos);
+                    broadcast(new ResultMessage(parolaCorretta, playerName + " ha vinto!"));
+                } else {
+                    sendMessage(new ResultMessage(parolaCorretta, "Risposta sbagliata!"), oos);
+                }
+            } else {
+                sendMessage(new ResultMessage(parolaCorretta, "Troppo tardi!"), oos);
+            }
+            
+        } else if (msg instanceof RequestGameMessage) {
+            RequestGameMessage rg = (RequestGameMessage) msg;
+            DIFFICULTY difficolta = rg.getDifficolta();
+            
+            ConnectedPlayer player = null;
+            for (ConnectedPlayer cp : players) {
+                if (cp.getSocket().equals(s)) {
+                    player = cp;
+                    break;
+                }
+            }
+            
+            if (inAttesa.containsKey(difficolta)) {
+                ConnectedPlayer playerAvversario = inAttesa.get(difficolta);
+                inAttesa.remove(difficolta);
+                
+                Challenge challenge = new Challenge();
+                ChallengeMessage cm = challenge.prepara(frequenza, testo, difficolta);
+                this.parolaCorretta = challenge.getParolaCorretta();
+                this.primaRisposta = null;
+                
+                sendMessage(cm, oos);
+                ObjectOutputStream oosAvversario = new ObjectOutputStream(
+                    playerAvversario.getSocket().getOutputStream()
+                );
+                sendMessage(cm, oosAvversario);
+                
+            } else {
+                inAttesa.put(difficolta, player);
+                sendMessage(new WaitingMessage("Aspetta un avversario con la stessa difficoltà . . ."), oos);
+            }
+            
+        } else {
+            throw new MessageException("Non è stato possibile leggere correttamente il messaggio");
+        }
     }
     
     public void run(){
@@ -142,5 +228,9 @@ public class Server extends Thread{
         } catch (IOException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    public List<ConnectedPlayer> getPlayers() {
+        return players;
     }
 }
