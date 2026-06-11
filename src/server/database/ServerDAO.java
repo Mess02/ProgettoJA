@@ -17,17 +17,23 @@ import java.util.logging.Logger;
 import common.CredentialsMessage;
 import common.Player;
 import common.TYPE;
-import server.User;
 
 /**
- *
- * @author Mess
+ * Classe ServerDAO implementa interfaccia DAO 
+ * gestisce la connessione con il database e implmenta le query utilizzate dall'applicazione 
+ * @author Giuseppe Messalino , Angela Monti 
  */
 public class ServerDAO implements DAO{
     private String url = "jdbc:sqlite:data/SystemManagementDB.db";
     private String username = "";
     private String password = ""; 
     
+    /**
+     * Il metodo verifica le credenziali dell'utente 
+     * @param credentials credenziali (username , password) dell'utente da verificare
+     * @return true/false a seconda che le credenziali siano giuste / errate
+     * @author Giuseppe Messalino
+     */
     @Override 
     public boolean verifyUser(CredentialsMessage credentials){
         String getPassword = null;
@@ -53,6 +59,11 @@ public class ServerDAO implements DAO{
         return getPassword.equals(credentials.getPassword());
     }
     
+    /**
+     * Il metodo restituisce una Lista di tutti i Player presenti in database
+     * @return list - lista contenente tutti i player presenti in database
+     * @author Giuseppe Messalino
+     */
     @Override 
     public List<Player> getAllPlayer(){
         List<Player> list = new ArrayList<>();
@@ -70,9 +81,15 @@ public class ServerDAO implements DAO{
         
         return list;
     }
-
+    
+    /**
+     * Metodo che permette di aggiungere un nuovo utente al database
+     * @param credentials credenziali dell'utente da registrare 
+     * @return true/false a seconda di come sia andato l'inserimento
+     * @author Giuseppe Messallino
+     */
     @Override 
-    public boolean addUser(CredentialsMessage credentials){
+    public boolean insertUser(CredentialsMessage credentials){
         try(Connection c = DriverManager.getConnection(url , username , password);
                 Statement s = c.createStatement()){
             String addUser = String.format("INSERT INTO users VALUES ('%s' , '%s' , '%s')" , credentials.getUsername() , credentials.getPassword() , "player");
@@ -84,9 +101,17 @@ public class ServerDAO implements DAO{
         return false;
     }
     
-    // f insert into tabella texts che ha titlee come id principale, lunghezza del test e path e analisis e poi  devo chiamare questa f nel metodo upload file
-    
-    public void insert(String title, int length, String path, String analysis) throws SQLException{
+    /**
+     * Il metodo aggiunge al database le informazioni relative ad un testo 
+     * @param title titolo del testo da aggiungere 
+     * @param length lunghezza (numero di parole) del testo
+     * @param path path del testo 
+     * @param analysis path dell'analisi relativa al testo
+     * @author Angela Monti
+     */
+
+    @Override
+    public void insertText(String title, int length, String path, String analysis){
         try(Connection c = DriverManager.getConnection(url, username, password);
         PreparedStatement cmd = c.prepareStatement(
             "INSERT INTO TEXTS(TITLE, LENGTH, PATH, ANALYSIS) VALUES (?,?,?,?)");){
@@ -95,6 +120,8 @@ public class ServerDAO implements DAO{
             cmd.setString(3, path);
             cmd.setString(4, analysis);
             cmd.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(ServerDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

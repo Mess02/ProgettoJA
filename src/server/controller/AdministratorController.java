@@ -46,7 +46,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import server.User;
 
 /**
  * FXML Controller class
@@ -77,9 +76,9 @@ public class AdministratorController implements Initializable {
         ServerDAO s = new ServerDAO();
         ObservableList<Player> list = FXCollections.observableArrayList(s.getAllPlayer());
         clientList.setItems(list);
-        for(Player p : list)
+/*        for(Player p : list)
             System.out.println(s.getPlayerMatch(p.getUsername()));
-        
+*/        
         avviaPartitaButton.setDisable(true);
         analysisButton.setDisable(true);
         
@@ -139,7 +138,13 @@ public class AdministratorController implements Initializable {
         
         
         analyze(file);
-        
+        try {
+            System.out.println(loadMap("file/Analisi/" + file.getName()));
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(AdministratorController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        ServerDAO s = new ServerDAO();
+        //s.insertText(file.getName() , 0 , destination.toString() , "file/Analisi/" + file.getName());
         //insert(String title, int length, file, String analysis);
 
     }
@@ -210,8 +215,8 @@ public class AdministratorController implements Initializable {
     
     private void analyze(File filename){
         
-        Path stopwords = Paths.get("file/stopwords-it.txt");
-        Path path = Paths.get("file/file.getName().bin");
+        Path stopwords = Paths.get("file/StopWords/stopwords-it.txt");
+        Path path = Paths.get("file/Analisi/" + filename.getName());
         List<String> stop = new ArrayList<>();
         
         
@@ -277,9 +282,9 @@ public class AdministratorController implements Initializable {
     
     private void aggiornaListaConnessi() {
         if (server != null) {
-            ObservableList<User> connessi = FXCollections.observableArrayList();
+            ObservableList<Player> connessi = FXCollections.observableArrayList();
             for (ConnectedPlayer cp : server.getPlayers()) {
-                connessi.add(new User(cp.getPlayer().getUsername()));
+                connessi.add(new Player(cp.getPlayer().getUsername()));
             }
             //clientList.setItems(connessi);
         }

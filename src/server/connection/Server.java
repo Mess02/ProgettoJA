@@ -38,8 +38,8 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- *
- * @author Mess
+ * Classe Server gestisce la connesione dei Client, la ricezione e l'invio dei messaggi Server - Client e Client - Server
+ * @author Giuseppe Messalino
  */
 public class Server extends Thread{
     private List<ConnectedPlayer> players;
@@ -66,7 +66,7 @@ public class Server extends Thread{
         socket.close();
     }
     
-    public void broadcast(Serializable msg) throws IOException{
+    public void broadcast(Serializable msg  /*,lista di due giocatori */) throws IOException{
         for (ConnectedPlayer cp : players) {
             ObjectOutputStream oos = new ObjectOutputStream(cp.getSocket().getOutputStream());
             oos.writeObject(msg);
@@ -107,7 +107,7 @@ public class Server extends Thread{
                 }
                 
             }else if(cm.getType() == TYPE.REGISTRATION){
-                boolean success = serverDAO.addUser(cm);
+                boolean success = serverDAO.insertUser(cm);
                 sendMessage(new ResponseMessage(success) , oos);
                 
                 if(success) players.add(new ConnectedPlayer(new Player(cm.getUsername()) , s));   
