@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import common.CredentialsMessage;
 import common.Player;
+import common.ResponseMessage;
 import common.TYPE;
 
 /**
@@ -35,28 +36,30 @@ public class ServerDAO implements DAO{
      * @author Giuseppe Messalino
      */
     @Override 
-    public boolean verifyUser(CredentialsMessage credentials){
+    public ResponseMessage verifyUser(CredentialsMessage credentials){
         String getPassword = null;
-        TYPE type = credentials.getType();
+        String getType = null;
+        TYPE type= null;
         try(Connection c = DriverManager.getConnection(url , username , this.password)){
-            PreparedStatement s;
-            
-            if(type.equals(TYPE.ADLOGIN)) s = c.prepareStatement("SELECT password FROM users WHERE username = ? and type = 'administrator'");
-            else s = c.prepareStatement("SELECT password FROM users WHERE username = ? and type = 'user'");
-            
+            PreparedStatement s = c.prepareStatement("SELECT password , type FROM users WHERE username = ?");
             s.setString(1, credentials.getUsername());
             
             ResultSet rs = s.executeQuery();
-            if(rs.next())
+            if(rs.next()){
                 getPassword = rs.getString("password");
-            
+                getType = rs.getString("type");                
+            }
         } catch (SQLException ex) {
             Logger.getLogger(ServerDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        if(getType.equals("user"))
+            type = TYPE.LOGIN;
+        else type = TYPE.ADLOGIN;
+        
         if(getPassword == null)
-            return false;
-        return getPassword.equals(credentials.getPassword());
+            return null;
+        return new ResponseMessage(getPassword.equals(credentials.getPassword()) , type);
     }
     
     /**
@@ -92,9 +95,10 @@ public class ServerDAO implements DAO{
     public boolean insertUser(CredentialsMessage credentials){
         try(Connection c = DriverManager.getConnection(url , username , password);
                 Statement s = c.createStatement()){
-            String addUser = String.format("INSERT INTO users VALUES ('%s' , '%s' , '%s')" , credentials.getUsername() , credentials.getPassword() , "player");
+            String addUser = String.format("INSERT INTO users VALUES ('%s' , '%s' , '%s')" , credentials.getUsername() , credentials.getPassword() , "user");
             
-            return s.execute(addUser);
+            s.executeUpdate(addUser);
+            return true;
         } catch (SQLException ex) {
             Logger.getLogger(ServerDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -127,21 +131,31 @@ public class ServerDAO implements DAO{
 
     @Override
     public int getPlayerWin(String username) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return 0;
     }
 
     @Override
     public int getPlayerMatch(String username) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return 0;
     }
 
     @Override
     public double getPlayerResponseTime(String username) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return 0;
     }
 
     @Override
     public void getPlayersMatchHistory(String username) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        
+    }
+
+    @Override
+    public void saveChallenge(int matchId, String playerName, float f, float timerResponse) {
+        
+    }
+
+    @Override
+    public int createMatch() {
+        return 0;
     }
 }

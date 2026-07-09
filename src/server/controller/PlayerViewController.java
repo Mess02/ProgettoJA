@@ -18,14 +18,10 @@ import server.database.ServerDAO;
  */
 public class PlayerViewController implements Initializable {
 
-    @FXML
-    private Label usernameLabel;
-    @FXML
-    private Label matchLabel;
-    @FXML
-    private Label winLabel;
-    @FXML
-    private Label timeLabel;
+    @FXML private Label usernameLabel;
+    @FXML private Label matchLabel;
+    @FXML private Label winLabel;
+    @FXML private Label timeLabel;
 
     /**
      * Initializes the controller class.
@@ -40,8 +36,9 @@ public class PlayerViewController implements Initializable {
         ServerDAO s = new ServerDAO();
         usernameLabel.setText(username);
         
-        matchLabel.setText(matchLabel.getText() + " " + s.getPlayerMatch(username));
-        winLabel.setText(winLabel.getText() + " " + s.getPlayerWin(username));
-        timeLabel.setText("");        
+        matchLabel.setText("Partite giocate: " + s.getPlayerMatch(username));
+        winLabel.setText("Partite vinte: " + s.getPlayerWin(username));
+        timeLabel.setText("Tempo medio: " + String.format("%.2f", s.getPlayerResponseTime(username)) + " sec");
     }
+    
 }

@@ -16,10 +16,17 @@ import java.net.Socket;
 public class ConnectedPlayer {
     Player player;
     Socket s;
+    ObjectOutputStream oos;
     
     public ConnectedPlayer(Player player , Socket s){
         this.player = player;
         this.s = s;
+    }
+
+    public ConnectedPlayer(Player player, Socket s, ObjectOutputStream oos) {
+        this.player = player;
+        this.s = s;
+        this.oos = oos;
     }
 
     public Player getPlayer() {
@@ -43,7 +50,7 @@ public class ConnectedPlayer {
     }
     
     public ObjectOutputStream getOutput() throws IOException{
-        return (ObjectOutputStream) s.getOutputStream();
+        return oos;
     }  
     
     @Override

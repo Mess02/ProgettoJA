@@ -20,12 +20,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.Stage;
 
 /**
  * FXML Controller class
@@ -36,6 +40,7 @@ public class GameController implements Initializable, Controller {
     
     private Client client;
     private int secondiRimasti;
+    private Thread timerThread;
     private Timer timer;
 
     
@@ -46,6 +51,7 @@ public class GameController implements Initializable, Controller {
     @FXML private Label statoLabel;
     @FXML private Label timerLabel;
     @FXML private Label parolaCorrettaLabel;
+    @FXML private Button tornaAlMenuButton;
 
     /**
      * Initializes the controller class.
@@ -61,6 +67,18 @@ public class GameController implements Initializable, Controller {
     public void setClient(Client client) {
         this.client = client;
         client.setController(this);
+        
+        Platform.runLater(() -> {
+            Stage stage = (Stage) statoLabel.getScene().getWindow();
+            stage.setOnCloseRequest(value -> {
+                if (timer != null) timer.cancel();
+                try {
+                    client.disconnect();
+                } catch (IOException ex) {
+                    System.out.println("Client disconnesso.");
+                }
+            });
+        });        
     }
     
     public void setChallenge(ChallengeMessage cm){
@@ -123,15 +141,17 @@ public class GameController implements Initializable, Controller {
     }
 
     public void mostraRisultato(ResultMessage rm){
-        if (timer != null){
-            timer.cancel();
-        }
+        Platform.runLater(() -> {
+            if (timer != null) timer.cancel();
         
-        rispostaTextField.setDisable(true);
-        inviaButton.setDisable(true);
+            rispostaTextField.setDisable(true);
+            inviaButton.setDisable(true);
         
-        statoLabel.setText("Stato: partita finita!");
-        parolaCorrettaLabel.setText("La parola corretta era: "+rm.getParolaCorretta());
+            statoLabel.setText("Stato: partita finita! " + rm.getEsito());
+            parolaCorrettaLabel.setText("La parola corretta era: " + rm.getParolaCorretta());
+        
+            tornaAlMenuButton.setVisible(true);
+        });
     }
     
     @FXML 
@@ -139,6 +159,9 @@ public class GameController implements Initializable, Controller {
         String risposta = rispostaTextField.getText().trim();
         if (!risposta.isEmpty()) {
             try {
+                if(timer != null){
+                    timer.cancel();
+                }
                 client.sendMessage(new AnswerMessage(risposta));
                 rispostaTextField.clear();
                 rispostaTextField.setDisable(true);
@@ -154,5 +177,20 @@ public class GameController implements Initializable, Controller {
     @FXML 
     private void scriviRisposta() throws IOException{
         inviaRisposta();
+    }
+    
+    @FXML
+    private void tornaAlMenu() throws IOException {
+        if (timer != null) timer.cancel();
+    
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/common/fxml/Menu.fxml"));
+        Parent root = loader.load();
+    
+        MenuController mc = loader.getController();
+        mc.setClient(client);
+    
+        Stage stage = (Stage) statoLabel.getScene().getWindow();
+        stage.setScene(new Scene(root));
+        stage.show();
     }
 }

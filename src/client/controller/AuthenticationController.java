@@ -24,7 +24,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import server.controller.AdministratorController;
 
 /**
  * FXML Controller class
@@ -34,10 +36,11 @@ import javafx.stage.Stage;
 public class AuthenticationController implements Initializable , Controller {
     private Client client;
     
+    @FXML private VBox authenticationBox;
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
     @FXML private Label messaggioLabel;
-    @FXML private Button loginButton;
+    @FXML private Button signInButton;
     
 
     /**
@@ -57,12 +60,17 @@ public class AuthenticationController implements Initializable , Controller {
     private void signIn(ActionEvent event) throws IOException {
         String username = usernameField.getText();
         String password = passwordField.getText();
-
+        
         if(username.isEmpty() || password.isEmpty()){
             messaggioLabel.setText("inserisci username e password");
+            return;
         }
         
-        client.sendMessage(new CredentialsMessage(username, password, TYPE.LOGIN));
+        messaggioLabel.setText("Accesso in corso . . .");
+        signInButton.setDisable(true);
+        
+        client.sendMessage(new CredentialsMessage(username, password));
+        
     }
 
     @FXML
@@ -70,19 +78,27 @@ public class AuthenticationController implements Initializable , Controller {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/common/fxml/registrazione.fxml"));
         Parent root= loader.load();
         
-        Stage stage= (Stage) usernameField.getScene().getWindow();
+        RegistrazioneController rc = loader.getController();
+        rc.setClient(client);
+        
+        Stage stage= (Stage) authenticationBox.getScene().getWindow();
         stage.setScene(new Scene(root));
         stage.show();
     }
 
-    public void vaiAlMenu() throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/common/fxml/Menu.fxml"));
+    public void vaiAlMenu(String filename) throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/common/fxml/" + filename + ".fxml"));
         Parent root= loader.load();
         
-        MenuController mc = loader.getController();
-        mc.setClient(client);
-        
-        Stage stage= (Stage) usernameField.getScene().getWindow();
+        if(filename.equals("Menu")){
+            MenuController mc = loader.getController();
+            mc.setClient(client);            
+        }else if(filename.equals("AdministratorView")){
+            AdministratorController avc = loader.getController();
+            avc.setClient(client);
+        }
+
+        Stage stage= (Stage) authenticationBox.getScene().getWindow();
         stage.setScene(new Scene(root));
         stage.show();
         
@@ -96,7 +112,7 @@ public class AuthenticationController implements Initializable , Controller {
             }
         });
     }
-
+    
     public void mostraTesto(String testo) {
         messaggioLabel.setText(testo);
     }

@@ -19,7 +19,7 @@ public class ServerApp extends Application {
     
     @Override
     public void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("fxml/authentication.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("/server/fxml/authentication.fxml"));
         
         Scene scene = new Scene(root);
         

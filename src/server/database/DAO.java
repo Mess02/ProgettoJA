@@ -7,13 +7,14 @@ package server.database;
 import java.util.List;
 import common.CredentialsMessage;
 import common.Player;
+import common.ResponseMessage;
 import java.sql.SQLException;
 
 /**
  * @author Mess
  */
 public interface DAO {
-    public boolean verifyUser(CredentialsMessage credentials);
+    public ResponseMessage verifyUser(CredentialsMessage credentials);
 
     public boolean insertUser(CredentialsMessage credentials);
     public List<Player> getAllPlayer();
@@ -22,4 +23,6 @@ public interface DAO {
     public double getPlayerResponseTime(String username);
     public void getPlayersMatchHistory(String username); /* ho messo void ma credo sia una lista */
     public void insertText(String title, int length, String path, String analysis) throws SQLException;
+    public int createMatch();
+    public void saveChallenge(int matchId, String username, float score, float responseTime);
 }

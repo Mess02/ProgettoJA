@@ -4,6 +4,7 @@
  */
 package server.controller;
 
+import client.connection.Client;
 import common.ConnectedPlayer;
 import common.Player;
 import java.awt.Desktop;
@@ -32,6 +33,7 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -60,12 +62,8 @@ public class AdministratorController implements Initializable {
     
     @FXML private Button uploadFileButton;
     @FXML private ListView<String> fileList;
-    @FXML private Button analysisButton;
-    @FXML private Button uploadAnalysisButton;
     @FXML private Label statoLabel;
-    @FXML private Button avviaServerButton;
     @FXML private ListView<Player> clientList;
-    @FXML private Button avviaPartitaButton;
 
     /**
      * Initializes the controller class.
@@ -76,11 +74,9 @@ public class AdministratorController implements Initializable {
         ServerDAO s = new ServerDAO();
         ObservableList<Player> list = FXCollections.observableArrayList(s.getAllPlayer());
         clientList.setItems(list);
-/*        for(Player p : list)
+        for(Player p : list) {
             System.out.println(s.getPlayerMatch(p.getUsername()));
-*/        
-        avviaPartitaButton.setDisable(true);
-        analysisButton.setDisable(true);
+        }
         
         fileChooser = new FileChooser();
         fileChooser.setTitle("Scegli un file!");
@@ -102,24 +98,32 @@ public class AdministratorController implements Initializable {
         });
         
         clientList.setOnMouseClicked(event -> {
-            if(event.getClickCount() == 2){
-                String username = clientList.getSelectionModel().getSelectedItem().getUsername();
-                try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/server/fxml/PlayerView.fxml"));
-                    Parent root = loader.load();
-                    PlayerViewController c = loader.getController();
-                    c.init(username);
-                    Stage stage = new Stage();
-                    stage.setScene(new Scene(root));
-                    stage.show();
-                } catch (IOException ex) {
-                    Logger.getLogger(AdministratorController.class.getName()).log(Level.SEVERE, null, ex);
+            if (event.getClickCount() == 2) {
+                Player p = clientList.getSelectionModel().getSelectedItem();
+                if (p != null) {
+                    try {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/server/fxml/PlayerView.fxml"));
+                        Parent root = loader.load();
+                        PlayerViewController c = loader.getController();
+                        c.init(p.getUsername());
+                        Stage stage = new Stage();
+                        stage.setScene(new Scene(root));
+                        stage.show();
+                    } catch (IOException ex) {
+                        Logger.getLogger(AdministratorController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
-                
-            }});
+            }
+        });
         
         aggiornaListaFile();
     }    
+    
+    public void setServer(Server server){
+        this.server=server;
+        server.setOnPlayersChanged(() -> aggiornaListaConnessi());
+        analizzaIFile();
+    }
 
     @FXML
     private void uploadFile(ActionEvent event) throws IOException{
@@ -130,41 +134,56 @@ public class AdministratorController implements Initializable {
         
         Path source = file.toPath();
         Path destination = Paths.get("file/" + file.getName());
-        
         Files.copy(source , destination , StandardCopyOption.REPLACE_EXISTING);
         
         statoLabel.setText("FileCaricato: " + file.getName());
         aggiornaListaFile();
-        
-        
+          
         analyze(file);
-        try {
-            System.out.println(loadMap("file/Analisi/" + file.getName()));
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(AdministratorController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        ServerDAO s = new ServerDAO();
-        //s.insertText(file.getName() , 0 , destination.toString() , "file/Analisi/" + file.getName());
-        //insert(String title, int length, file, String analysis);
-
-    }
-
-    @FXML
-    private void analiyeText(ActionEvent event) {
-        String fileSelezionato = fileList.getSelectionModel().getSelectedItem();
+        salvaAnalisi("file/" + file.getName().replace(".txt", ".bin"));
+        server.aggiungiAnalisi(testo, frequenza);
         
-        if(fileSelezionato == null){
-            statoLabel.setText("Seleziona un file da analizzare");
+        statoLabel.setText("File caricato: " + file.getName() + " — totale: " + server.getNumeroAnalisi() + " file");
+    }
+    
+    private void analizzaIFile() {
+        File cartella = new File("file/");
+        if (!cartella.exists()) return;
+        
+        File[] files = cartella.listFiles((dir, name) -> name.endsWith(".txt"));
+        if (files == null || files.length == 0) {
+            statoLabel.setText("Nessun file TXT trovato in file/");
             return;
         }
         
-        statoLabel.setText("Analisi di "+ fileSelezionato + "in corso . . .");
-    }
-
-    @FXML
-    private void uploadAnalysis(ActionEvent event) {
-        statoLabel.setText("analisi caricata");
-        avviaPartitaButton.setDisable(false);
+        for (File f : files) {
+            String nomeBin = f.getName().replace(".txt", ".bin");
+            File fileBin = new File("file/" + nomeBin);
+            
+            if (fileBin.exists()) {
+                try {
+                    frequenza = (LinkedHashMap<String, Integer>) loadMap("file/" + nomeBin);
+                    
+                    StringBuilder sb = new StringBuilder();
+                    try (BufferedReader r = Files.newBufferedReader(f.toPath())) {
+                        String line;
+                        while ((line = r.readLine()) != null)
+                            sb.append(line).append(" ");
+                    }
+                    testo = sb.toString();
+                    System.out.println("Analisi caricata: " + nomeBin);
+                    
+                } catch (Exception ex) {
+                    Logger.getLogger(AdministratorController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            } else {
+                analyze(f);
+                salvaAnalisi("file/" + nomeBin);
+                System.out.println("Analisi calcolata e salvata: " + nomeBin);
+            }
+            
+            server.aggiungiAnalisi(testo, frequenza);
+        }
     }
     
     private void aggiornaListaFile(){
@@ -172,55 +191,26 @@ public class AdministratorController implements Initializable {
         if(cartella.exists()){
             ObservableList<String> files = FXCollections.observableArrayList();
             for(File f: cartella.listFiles()){
-                if(f.getName().endsWith(".txt")){
+                if (f.isFile() && f.getName().endsWith(".txt")) {
                     files.add(f.getName());
                 }
             }
             fileList.setItems(files);
         }
     }
-    
-    @FXML
-    private void avviaServer(ActionEvent event){
-        try{
-            server = new Server();
-            statoLabel.setText("Server avviato! in attesa dei client . . .");
-            avviaServerButton.setDisable(true);
-        }catch(Exception e){
-            statoLabel.setText("Errrore nell'avvio del server");
-            System.out.println("Errore: "+ e.getMessage());
-        }
-    }
-    
-    @FXML
-    private void avviaPartita(ActionEvent event){
-        aggiornaListaConnessi();
-        
-        if (frequenza == null || testo == null) {
-            statoLabel.setText("Analizza prima un file!");
-            return;
-        }
-        
-        server.setPartita(frequenza, testo);
-        statoLabel.setText("Partita avviata!");
-        avviaPartitaButton.setDisable(true);
-    }
 
     @FXML
     private void disconnect(ActionEvent event) throws IOException {
         server.disconnect();
         statoLabel.setText("Server disconnesso.");
-        avviaServerButton.setDisable(false);
     }
     
     private void analyze(File filename){
         
         Path stopwords = Paths.get("file/StopWords/stopwords-it.txt");
-        Path path = Paths.get("file/Analisi/" + filename.getName());
         List<String> stop = new ArrayList<>();
-        
-        
         List<String> text = new ArrayList<>();
+        
         try(BufferedReader r = Files.newBufferedReader(stopwords)){
             String line;
             while((line = r.readLine()) != null)
@@ -229,9 +219,11 @@ public class AdministratorController implements Initializable {
             Logger.getLogger(AdministratorController.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        StringBuilder sb= new StringBuilder();
         try(BufferedReader r = Files.newBufferedReader(filename.toPath())){
             String line;
             while((line = r.readLine()) != null){
+                sb.append(line).append(" ");
                 Arrays.stream(line.split(" "))
                         .map(String :: trim)
                         .map(String :: toLowerCase)
@@ -248,45 +240,54 @@ public class AdministratorController implements Initializable {
             Logger.getLogger(AdministratorController.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        testo=sb.toString();
+        
         text = text.stream().filter(p -> !stop.contains(p)).collect(Collectors.toList());
         
         Map<String, Integer> mappa = new LinkedHashMap<>();               
         
-        for(String s: text){
-            if(mappa.containsKey(s)){
-                int conteggioPrecedente = mappa.get(s);
-                mappa.put(s, conteggioPrecedente +1);
-            }
-            else mappa.put(s, 1);
+        frequenza = new LinkedHashMap<>();
+        for (String s : text) {
+            if (frequenza.containsKey(s))
+                frequenza.put(s, frequenza.get(s) + 1);
+            else
+                frequenza.put(s, 1);
         }
-        //return (LinkedHashMap<String, Integer>) mappa;
         
-        try(OutputStream out = Files.newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-                BufferedOutputStream bos = new BufferedOutputStream(out);
-                ObjectOutputStream oos = new ObjectOutputStream(bos)){
-            
-            oos.writeObject(mappa);
-        
+    }
+    
+    private void salvaAnalisi(String path) {
+        try (OutputStream out = Files.newOutputStream(Paths.get(path),
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+             BufferedOutputStream bos = new BufferedOutputStream(out);
+             ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            oos.writeObject(frequenza);
         } catch (IOException ex) {
             Logger.getLogger(AdministratorController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
-    public Map<String, Integer> loadMap(String filename) throws IOException, ClassNotFoundException{
-        Map<String, Integer> mappa = null;
-        try(ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(Files.newInputStream(Paths.get(filename))))){
-            mappa = (Map<String, Integer>) ois.readObject();
+    private LinkedHashMap<String, Integer> loadMap(String filename) throws IOException, ClassNotFoundException {
+        try (ObjectInputStream ois = new ObjectInputStream(
+                new BufferedInputStream(Files.newInputStream(Paths.get(filename))))) {
+            return (LinkedHashMap<String, Integer>) ois.readObject();
         }
-        return mappa;
     }
     
     private void aggiornaListaConnessi() {
         if (server != null) {
-            ObservableList<Player> connessi = FXCollections.observableArrayList();
-            for (ConnectedPlayer cp : server.getPlayers()) {
-                connessi.add(new Player(cp.getPlayer().getUsername()));
-            }
-            //clientList.setItems(connessi);
+            Platform.runLater(() -> {
+                ServerDAO s = new ServerDAO();
+                ObservableList<Player> tutti = FXCollections.observableArrayList(s.getAllPlayer());
+                clientList.setItems(tutti);
+                statoLabel.setText("Server avviato — client connessi: " + server.getPlayers().size());
+            });
         }
+    }
+    
+    
+    
+    public void setClient(Client client){
+        
     }
 }

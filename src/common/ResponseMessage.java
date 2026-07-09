@@ -12,13 +12,22 @@ import java.io.Serializable;
  */
 public class ResponseMessage implements Serializable{
     private boolean success;
+    private TYPE type; 
     
-    public ResponseMessage(boolean success){
+    public ResponseMessage(boolean success, TYPE type){
+        this.success = success;
+        this.type = type;
+    }
+    public void setSuccess(boolean success){
         this.success = success;
     }
     
     public boolean isSuccess(){
         return success;
+    }
+    
+    public TYPE getType(){
+        return type;
     }
     
     @Override 

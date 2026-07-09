@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.TextFlow?>
 
-<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8.0.202" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.controller.GameController">
+<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.controller.GameController">
    <children>
       <TextField fx:id="rispostaTextField" layoutX="42.0" layoutY="265.0" onAction="#scriviRisposta" prefHeight="26.0" prefWidth="402.0" AnchorPane.bottomAnchor="103.0" AnchorPane.leftAnchor="42.0" AnchorPane.rightAnchor="155.20000000000005" AnchorPane.topAnchor="264.8" />
       <Label fx:id="inserisciLabel" layoutX="46.0" layoutY="247.0" text="Inserisci qui la parola esatta:" />
@@ -15,5 +15,6 @@
       <Label fx:id="statoLabel" layoutX="42.0" layoutY="25.0" text="Stato: " />
       <Label fx:id="timerLabel" layoutX="492.0" layoutY="25.0" text="Timer: " />
       <Label fx:id="parolaCorrettaLabel" layoutX="46.0" layoutY="335.0" text="" />
+      <Button fx:id="tornaAlMenuButton" layoutX="459.0" layoutY="340.0" onAction="#tornaAlMenu" text="Torna al Menu" visible="false" />
    </children>
 </AnchorPane>

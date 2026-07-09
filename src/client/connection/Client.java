@@ -12,6 +12,7 @@ import client.controller.MenuController;
 import client.controller.RegistrazioneController;
 import common.ChallengeMessage;
 import common.ResultMessage;
+import common.TYPE;
 import common.WaitingMessage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +27,13 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import server.connection.Server;
+import server.controller.AdministratorController;
 
 /**
  *
@@ -55,17 +63,24 @@ public class Client extends Thread{
         if (msg instanceof ResponseMessage) {
             ResponseMessage rm = (ResponseMessage) msg;
             if (rm.isSuccess()) {
-                Platform.runLater(() -> {
-                    try {
-                        if (controller instanceof AuthenticationController) {
-                            ((AuthenticationController) controller).vaiAlMenu();
-                        } else if (controller instanceof RegistrazioneController) {
-                            ((RegistrazioneController) controller).vaiAlLogin();
+                if(rm.getType().equals(TYPE.LOGIN)){
+                    Platform.runLater(() -> {
+                        try {
+                            ((AuthenticationController) controller).vaiAlMenu("Menu");
+                        } catch (IOException ex) {
+                            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
                         }
-                    } catch (IOException ex) {
-                        Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                });
+                    });    
+                }else if(rm.getType().equals(TYPE.ADLOGIN)){
+                    Platform.runLater(() -> {
+                        try {
+                            ((AuthenticationController) controller).vaiAlMenu("AdministratorView");
+                        } catch (IOException ex) {
+                            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    });
+            }
+
             } else {
                 Platform.runLater(() -> {
                     if (controller instanceof AuthenticationController) {
@@ -80,8 +95,8 @@ public class Client extends Thread{
         if (msg instanceof WaitingMessage) {
             WaitingMessage wm = (WaitingMessage) msg;
             Platform.runLater(() -> {
-                if (controller instanceof AuthenticationController) {
-                    ((AuthenticationController) controller).mostraTesto(wm.getTesto());
+                if (controller instanceof MenuController) {
+                    ((MenuController) controller).mostraTesto(wm.getTesto());
                 }
             });
         }

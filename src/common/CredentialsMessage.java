@@ -13,12 +13,10 @@ import java.io.Serializable;
 public class CredentialsMessage implements Serializable{
     private String username;
     private String password;
-    private TYPE type;
     
-    public CredentialsMessage(String username , String password, TYPE type){
+    public CredentialsMessage(String username , String password){
         this.username = username;
         this.password = password;
-        this.type = type;
     }
     
     public String getUsername(){
@@ -27,10 +25,6 @@ public class CredentialsMessage implements Serializable{
     
     public String getPassword(){
         return password;
-    }
-
-    public TYPE getType() {
-        return type;
     }
     
 }

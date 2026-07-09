@@ -9,13 +9,14 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="430.0" prefWidth="280.0" xmlns="http://javafx.com/javafx/8.0.202" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.controller.AuthenticationController">
+<VBox fx:id="authenticationBox" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="430.0" prefWidth="280.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.controller.AuthenticationController">
    <children>
       <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
          <image>
             <Image url="@administrator.png" />
          </image>
       </ImageView>
+      <Label fx:id="messaggioLabel" text="" />
       <TextField fx:id="usernameField" alignment="CENTER" promptText="Username">
          <VBox.margin>
             <Insets bottom="20.0" left="20.0" right="20.0" top="80.0" />
@@ -31,10 +32,9 @@
             <Insets top="50.0" />
          </VBox.margin>
       </Button>
-      <Label fx:id="messaggioLabel" text="" />
-      <Label text="Non hai un account? Registrati"
-             onMouseClicked="#signUp">
-         <VBox.margin><Insets top="15.0"/></VBox.margin>
+      <Label onMouseClicked="#signUp" text="Non hai un account? Registrati">
+         <VBox.margin><Insets top="15.0" /></VBox.margin>
       </Label>
+      
    </children>
 </VBox>

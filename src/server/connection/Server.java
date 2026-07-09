@@ -5,7 +5,6 @@
 package server.connection;
 
 import common.AnswerMessage;
-import common.Challenge;
 import common.ChallengeMessage;
 import common.ConnectedPlayer;
 import common.exceptions.MessageException;
@@ -25,7 +24,6 @@ import common.DIFFICULTY;
 import common.Player;
 import common.RequestGameMessage;
 import common.ResponseMessage;
-import common.ResultMessage;
 import common.TYPE;
 import common.WaitingMessage;
 import java.io.InputStream;
@@ -34,8 +32,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
+import javafx.application.Platform;
+import server.Challenge;
 
 /**
  * Classe Server gestisce la connesione dei Client, la ricezione e l'invio dei messaggi Server - Client e Client - Server
@@ -47,17 +48,18 @@ public class Server extends Thread{
     private ServerSocket socket;
     private final ServerDAO serverDAO;
     
-    private String parolaCorretta;
-    private Map<String, Integer> frequenza;
-    private String testo;
-    private String primaRisposta;
+    private Map<String, Map<String, Integer>> analisi = new LinkedHashMap<>();
+    private Challenge currentChallenge;
+    private ObjectOutputStream oosPlayer1;
+    private ObjectOutputStream oosPlayer2;    
+    
+    private Runnable onPlayersChanged;
     
     public Server() throws IOException {
         setSocket();
         
         players = new ArrayList<>();
         serverDAO = new ServerDAO();
-        primaRisposta=null;
         
         this.start();
     }
@@ -66,76 +68,121 @@ public class Server extends Thread{
         socket.close();
     }
     
-    public void broadcast(Serializable msg  /*,lista di due giocatori */) throws IOException{
-        for (ConnectedPlayer cp : players) {
-            ObjectOutputStream oos = new ObjectOutputStream(cp.getSocket().getOutputStream());
-            oos.writeObject(msg);
-            oos.flush();
-        }
+    public void aggiungiAnalisi(String testo, Map<String, Integer> frequenza) {
+        analisi.put(testo, frequenza);
     }
     
-    public void setPartita(Map<String, Integer> frequenza, String testo) {
-        this.frequenza = frequenza;
-        this.testo = testo;
+    public int getNumeroAnalisi() {
+        return analisi.size();
+    }
+    
+    public void setOnPlayersChanged(Runnable callback) {
+        this.onPlayersChanged = callback;
+    }
+    
+    private void notificaCambiamento() {
+        if (onPlayersChanged != null) {
+            Platform.runLater(onPlayersChanged);
+        }
     }
     
     public void sendMessage(Serializable msg , ObjectOutputStream oos) throws IOException{
         oos.writeObject(msg);
         oos.flush();
     }
+    
+    private Map.Entry<String, Map<String, Integer>> scegliAnalisi(DIFFICULTY difficolta) {
+        if (analisi.isEmpty()) return null;
+        
+        Map.Entry<String, Map<String, Integer>> scelta = null;
+        double targetLunghezza;
+        
+        if (difficolta == DIFFICULTY.EASY) {
+            targetLunghezza = Double.MAX_VALUE;
+            for (Map.Entry<String, Map<String, Integer>> entry : analisi.entrySet()) {
+                double media = calcolaLunghezzaMedia(entry.getValue());
+                if (media < targetLunghezza) {
+                    targetLunghezza = media;
+                    scelta = entry;
+                }
+            }
+        } else if (difficolta == DIFFICULTY.HARD) {
+            targetLunghezza = Double.MIN_VALUE;
+            for (Map.Entry<String, Map<String, Integer>> entry : analisi.entrySet()) {
+                double media = calcolaLunghezzaMedia(entry.getValue());
+                if (media > targetLunghezza) {
+                    targetLunghezza = media;
+                    scelta = entry;
+                }
+            }
+        } else {
+            int indice = analisi.size() / 2;
+            int i = 0;
+            for (Map.Entry<String, Map<String, Integer>> entry : analisi.entrySet()) {
+                if (i == indice) {
+                    scelta = entry;
+                    break;
+                }
+                i++;
+            }
+        }
+        
+        return scelta;
+    }
+    
+    private double calcolaLunghezzaMedia(Map<String, Integer> frequenza) {
+        return frequenza.keySet().stream()
+            .mapToInt(String::length)
+            .average()
+            .orElse(0);
+    }
 
     public void handleMessage(Serializable msg , Socket s , ObjectOutputStream oos) throws IOException , MessageException{
         if(msg instanceof CredentialsMessage){
             CredentialsMessage cm = (CredentialsMessage) msg;
-            if(cm.getType() == TYPE.LOGIN){
-                boolean success;
-                
-                if(players.contains(new ConnectedPlayer(new Player(cm.getUsername()) , null))) success = false;
-                else success = serverDAO.verifyUser(cm);
-                
-                sendMessage(new ResponseMessage(success) , oos);
-                
-                if(success){
-                    players.add(new ConnectedPlayer(new Player(cm.getUsername()), s));
-                    System.out.println(players);
-                    
-                    if (players.size() == 1)
-                        sendMessage(new WaitingMessage("Aspetta l'altro giocatore . . ."), oos);
-                    
-                    if (players.size() == 2)
-                        System.out.println("Entrambi i player sono connessi!");
+            boolean success = true;
+            ResponseMessage response = null;
+            
+                if(players.contains(new ConnectedPlayer(new Player(cm.getUsername()) , null))) {
+                    success = false;
+                } else {
+                    response = serverDAO.verifyUser(cm);
                 }
                 
-            }else if(cm.getType() == TYPE.REGISTRATION){
+                sendMessage(response , oos);
+                
+                if(success){
+                    players.add(new ConnectedPlayer(new Player(cm.getUsername()), s, oos));
+                    notificaCambiamento();
+                    System.out.println(players);
+                }
+                
+            }/*else if(cm.getType() == TYPE.REGISTRATION){
                 boolean success = serverDAO.insertUser(cm);
                 sendMessage(new ResponseMessage(success) , oos);
                 
-                if(success) players.add(new ConnectedPlayer(new Player(cm.getUsername()) , s));   
+                if(success){
+                    players.add(new ConnectedPlayer(new Player(cm.getUsername()) , s, oos));
+                    notificaCambiamento(); 
+                }   
                 System.out.println(players);
             }    
-        }else if (msg instanceof AnswerMessage) {
+        }*/else if (msg instanceof AnswerMessage) {
             AnswerMessage am = (AnswerMessage) msg;
             
-            String playerName = "";
-            for (ConnectedPlayer cp : players) {
-                if (cp.getSocket().equals(s)) {
-                    playerName = cp.getPlayer().getUsername();
+            if(currentChallenge == null){
+                return;
+            }
+            
+            String playerName= "";
+            for(ConnectedPlayer cp: players){
+                if(cp.getSocket().equals(s)){
+                    playerName=cp.getPlayer().getUsername();
                     break;
                 }
             }
             
-            if (primaRisposta == null) {
-                primaRisposta = am.getRisposta();
-                
-                if (primaRisposta.equalsIgnoreCase(parolaCorretta)) {
-                    sendMessage(new ResultMessage(parolaCorretta, "Hai vinto!"), oos);
-                    broadcast(new ResultMessage(parolaCorretta, playerName + " ha vinto!"));
-                } else {
-                    sendMessage(new ResultMessage(parolaCorretta, "Risposta sbagliata!"), oos);
-                }
-            } else {
-                sendMessage(new ResultMessage(parolaCorretta, "Troppo tardi!"), oos);
-            }
+            currentChallenge.verifyResponse(am.getRisposta(), playerName, oos);
             
         } else if (msg instanceof RequestGameMessage) {
             RequestGameMessage rg = (RequestGameMessage) msg;
@@ -153,16 +200,32 @@ public class Server extends Thread{
                 ConnectedPlayer playerAvversario = inAttesa.get(difficolta);
                 inAttesa.remove(difficolta);
                 
-                Challenge challenge = new Challenge();
-                ChallengeMessage cm = challenge.prepara(frequenza, testo, difficolta);
-                this.parolaCorretta = challenge.getParolaCorretta();
-                this.primaRisposta = null;
+                Map.Entry<String, Map<String, Integer>> analisiScelta = scegliAnalisi(difficolta);
                 
-                sendMessage(cm, oos);
-                ObjectOutputStream oosAvversario = new ObjectOutputStream(
-                    playerAvversario.getSocket().getOutputStream()
+                if (analisiScelta == null) {
+                    sendMessage(new WaitingMessage("Nessun file disponibile!"), oos);
+                    return;
+                }
+                
+                currentChallenge = new Challenge();
+                ChallengeMessage cm = currentChallenge.prepareChallenge(
+                    analisiScelta.getValue(),
+                    analisiScelta.getKey(),
+                    difficolta
                 );
-                sendMessage(cm, oosAvversario);
+                
+                if(cm==null){
+                    sendMessage(new WaitingMessage("Errore nella preparazione della sfida"), oos);
+                    return;
+                }
+                
+                this.oosPlayer1 = oos;
+                this.oosPlayer2 = playerAvversario.getOutput();
+                
+                currentChallenge.startingChallenge(oosPlayer1, oosPlayer2, player.getPlayer().getUsername(), playerAvversario.getPlayer().getUsername(), serverDAO);
+    
+                sendMessage(cm, oosPlayer1);
+                sendMessage(cm, oosPlayer2);
                 
             } else {
                 inAttesa.put(difficolta, player);
@@ -174,6 +237,7 @@ public class Server extends Thread{
         }
     }
     
+    @Override
     public void run(){
         while(true){
             try{
@@ -185,19 +249,34 @@ public class Server extends Thread{
                     try{
                         while(true){
                             Serializable msg = (Serializable) ois.readObject();
-                            if(msg != null)
+                            if(msg != null) {
                                 handleMessage(msg , s ,oos);
+                            }
                         }
-                    }catch(Exception ex){
+                    }catch(MessageException | IOException | ClassNotFoundException ex){
                         System.out.println("Client disconnesso");
                         /* l'iterator serve per non far lanciare l'exception ConcurrentModificationException */
+                        String nomeDisconnesso = "";
                         Iterator<ConnectedPlayer> it = players.iterator();
                         while (it.hasNext()) {
                             ConnectedPlayer conn = it.next();
                             if (conn.getSocket().equals(s)) {
+                                nomeDisconnesso = conn.getPlayer().getUsername();
                                 it.remove();
                             }
                         }
+                        
+                        notificaCambiamento();
+                        
+                        if (currentChallenge != null && !currentChallenge.isEndedChallenge()) {
+                            try {
+                                ObjectOutputStream oosAvversario = (oos == oosPlayer1) ? oosPlayer2 : oosPlayer1;
+                                currentChallenge.disconnect(nomeDisconnesso, oosAvversario);
+                            } catch (IOException e) {
+                                System.out.println("Errore notifica disconnessione.");
+                            }
+                        }
+                        
                         System.out.println(players);
                     }
                 }).start();
@@ -210,7 +289,9 @@ public class Server extends Thread{
                             cp.getSocket().close();
                         } catch (IOException ex1) {}
                     players.clear();
-                } else Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                } else {
+                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 break;
             }
         }
